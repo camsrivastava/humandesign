@@ -1,0 +1,1 @@
+Place your NEJM screenshot here (e.g., nejm-case-01.png)
