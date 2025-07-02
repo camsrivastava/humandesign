@@ -1,27 +1,25 @@
-
-
-app.use(cors({
-  origin: 'https://camsrivastava.github.io', // Replace with your actual GitHub Pages domain
-  methods: ['POST'],
-}));
-
 const express = require('express');
 const fetch = require('node-fetch');
 const cors = require('cors');
+
 const app = express();
-app.use(cors());
+
+app.use(cors({
+  origin: 'https://camsrivastava.github.io',
+  methods: ['POST'],
+}));
+
 app.use(express.json());
 app.use(express.static('.'));
 
-const OPENAI_API_KEY = 'your-api-key-here';
-
+// OpenAI GPT-4o-mini streaming endpoint
 app.post('/chat', async (req, res) => {
   const userMessage = req.body.message;
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
