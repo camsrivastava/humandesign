@@ -1,3 +1,10 @@
+const cors = require('cors');
+
+app.use(cors({
+  origin: 'https://camsrivastava.github.io', // Replace with your actual GitHub Pages domain
+  methods: ['POST'],
+}));
+
 const express = require('express');
 const fetch = require('node-fetch');
 const cors = require('cors');
