@@ -7,10 +7,22 @@
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-  <div class="top-panel">
-    <img src="assets/nejm-case-01.png" alt="NEJM Case Screenshot" />
+
+  <!-- 🔼 NEW TOP PANEL -->
+  <div class="top-panel" id="question-panel">
+    <!-- Loaded dynamically by questions.js -->
+    <div id="question-image"></div>
+    <div id="question-text"></div>
+    <form id="question-form"></form>
+    <div id="answer-feedback"></div>
+    <div id="navigation-buttons">
+      <button id="submit-answer">Submit Answer</button>
+      <button id="show-answer">Show Answer</button>
+      <button id="next-question">Next Question</button>
+    </div>
   </div>
 
+  <!-- 🔽 BOTTOM CHAT PANEL (unchanged) -->
   <div class="bottom-panel">
     <div class="chat-box" id="chat-box"></div>
     <form id="chat-form">
@@ -19,6 +31,8 @@
     </form>
   </div>
 
+  <!-- 📜 JavaScript -->
+  <script src="questions.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
