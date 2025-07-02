@@ -8,7 +8,7 @@ chatForm.addEventListener('submit', async (e) => {
   addMessage('You', message);
   userInput.value = '';
 
-  const response = await fetch('/chat', {
+  const response = await fetch('https://humandesign-vue9.onrender.com/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message }),
