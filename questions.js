@@ -3,7 +3,7 @@ let currentQuestionIndex = 0;
 let questions = [];
 
 async function loadQuestions() {
-  const response = await fetch('benchmark.json');
+  const response = await fetch('benchmark_high_res.json');
   questions = await response.json();
   showQuestion(currentQuestionIndex);
 }
