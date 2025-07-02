@@ -4,13 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Image Challenge + GPT</title>
-  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- 🔼 NEW TOP PANEL -->
+  <!-- 🔼 TOP PANEL: Dynamic Question Viewer -->
   <div class="top-panel" id="question-panel">
-    <!-- Loaded dynamically by questions.js -->
     <div id="question-image"></div>
     <div id="question-text"></div>
     <form id="question-form"></form>
@@ -22,7 +21,7 @@
     </div>
   </div>
 
-  <!-- 🔽 BOTTOM CHAT PANEL (unchanged) -->
+  <!-- 🔽 BOTTOM PANEL: GPT Chat -->
   <div class="bottom-panel">
     <div class="chat-box" id="chat-box"></div>
     <form id="chat-form">
@@ -31,8 +30,10 @@
     </form>
   </div>
 
-  <!-- 📜 JavaScript -->
+  <!-- 📜 Scripts -->
+  <script src="benchmark.js"></script>
   <script src="questions.js"></script>
   <script src="script.js"></script>
+
 </body>
 </html>
