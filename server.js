@@ -1,4 +1,4 @@
-const cors = require('cors');
+
 
 app.use(cors({
   origin: 'https://camsrivastava.github.io', // Replace with your actual GitHub Pages domain
