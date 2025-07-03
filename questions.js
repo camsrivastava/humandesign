@@ -34,8 +34,9 @@ function showQuestion(index) {
 
   document.getElementById('answer-feedback').innerText = '';
 
-  localStorage.setItem("highlightedQuestionIndex", currentQuestionIndex.toString());
-  localStorage.setItem("highlightedChatHistory", JSON.stringify(chatHistory));
+ localStorage.setItem("currentQuestionIndex", ...)
+localStorage.setItem("chatHistory", ...)
+
 
   chatBox.innerHTML = '';
   chatHistory.forEach(entry => {
