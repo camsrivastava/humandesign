@@ -1,4 +1,3 @@
-
 let currentQuestionIndex = 0;
 let questions = benchmark;
 
@@ -6,7 +5,7 @@ function showQuestion(index) {
   const q = questions[index];
 
   document.getElementById('question-image').innerHTML = `
-    <img src="${q.image_path.replace('\\', '/')}" alt="Case Image" style="max-width:100%; max-height:300px;" />
+    <img src="${q.image_path.replace(/\\\\/g, '/')}" alt="Case Image" style="max-width:100%; max-height:300px;" />
   `;
 
   fetch('https://humandesign-vue9.onrender.com/highlight', {
