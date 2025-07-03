@@ -82,15 +82,18 @@ app.post('/diagnose', async (req, res) => {
   const { question, options, history } = req.body;
 
   const systemPrompt = `
-You are taking a multiple-choice clinical image challenge quiz, but you are NOT shown the image — only the text of the question and the list of answer choices.
+You are taking a multiple-choice clinical image challenge quiz, but you are NOT shown the image — only the question text and the answer options.
 
-You will ask the human ONE specific question at a time about the image. Wait for their reply before asking another. Be responsive to what they say — if they mention features that help eliminate answers, do so gradually.
+The human can see the image, so your job is to ask them ONE highly specific image-related question at a time.
 
-Your goal is to think step-by-step, eliminate wrong choices, and eventually choose the most likely answer. Do not rush. Do not ask multiple questions at once.
+Your goal is to reach an answer with the highest possible diagnostic certainty — close to 100%. 
+Take your time. Be methodical. Even if you think you know the answer early, continue investigating to rule out other possibilities or confirm your thinking.
 
-When you're ready, give a confident final answer like this:
+Do NOT jump to a final answer quickly. Ask image-related follow-up questions until you have a clear and complete picture. When you're confident, respond like this:
+
 "Based on your interpretation, I believe the correct answer is: [ANSWER]."
 `;
+
 
 
   const messages = [
