@@ -132,19 +132,25 @@ function saveChat() {
   sessionStorage.setItem('dChatHist', JSON.stringify(chatHistory));
 }
 
-/* ─────────────── 6. Answer-button injection (crash-proof) ─────────────── */
+/* ───────── 6.  Answer-button injection: inline onclick = no null crash ───────── */
 function checkForFinalAnswer(reply) {
   if (!reply.includes('I believe the correct answer is')) return;
 
   const panel = document.getElementById('question-panel');
-  let   nav   = document.getElementById('nav-buttons');
 
-  /* Create container if needed */
-  if (!nav) {
-    nav = document.createElement('div');
-    nav.id = 'nav-buttons';
-    panel.appendChild(nav);
-  }
+  /* Only create once per question */
+  if (document.getElementById('nav-buttons')) return;
+
+  const nav = document.createElement('div');
+  nav.id = 'nav-buttons';
+  nav.innerHTML = `
+    <button onclick="submitHumanAnswer()">Submit Answer</button>
+    <button onclick="showCorrectAnswer()">Show Answer</button>
+    <button onclick="nextQuestion()">Next Question</button>
+  `;
+  panel.appendChild(nav);
+}
+
 
   /* If buttons already exist, don’t recreate/retach */
   if (nav.querySelector('#submit-btn')) return;
