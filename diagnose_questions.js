@@ -8,6 +8,7 @@ const dialogForm = document.getElementById('chat-form');
 const dialogInput = document.getElementById('user-input');
 
 
+
 const feedbackBox = document.getElementById('answer-feedback') || document.createElement('div');
 const navButtons = document.getElementById('navigation-buttons') || document.createElement('div');
 
