@@ -1,9 +1,30 @@
-const chatBox = document.getElementById('chat-box');
-const chatForm = document.getElementById('chat-form');
-const userInput = document.getElementById('user-input');
 
-chatForm.addEventListener('submit', async (e) => {
+let questions = benchmark;
+let currentQuestionIndex = localStorage.getItem("currentQuestionIndex")
+  ? parseInt(localStorage.getItem("currentQuestionIndex"))
+  : 0;
+
+function addMessage(sender, text) {
+  const div = document.createElement('div');
+  div.textContent = \`\${sender}: \${text}\`;
+  document.getElementById('chat-box').appendChild(div);
+  document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+}
+
+function updateAssistantMessage(text) {
+  let last = document.getElementById('chat-box').lastChild;
+  if (!last || !last.classList.contains('assistant')) {
+    last = document.createElement('div');
+    last.classList.add('assistant');
+    document.getElementById('chat-box').appendChild(last);
+  }
+  last.textContent = \`GPT: \${text}\`;
+  document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+}
+
+document.getElementById('chat-form').addEventListener('submit', async (e) => {
   e.preventDefault();
+  const userInput = document.getElementById('user-input');
   const message = userInput.value;
   addMessage('You', message);
   userInput.value = '';
@@ -27,20 +48,9 @@ chatForm.addEventListener('submit', async (e) => {
   }
 });
 
-function addMessage(sender, text) {
-  const div = document.createElement('div');
-  div.textContent = `${sender}: ${text}`;
-  chatBox.appendChild(div);
-  chatBox.scrollTop = chatBox.scrollHeight;
-}
-
-function updateAssistantMessage(text) {
-  let last = chatBox.lastChild;
-  if (!last || !last.classList.contains('assistant')) {
-    last = document.createElement('div');
-    last.classList.add('assistant');
-    chatBox.appendChild(last);
-  }
-  last.textContent = `GPT: ${text}`;
-  chatBox.scrollTop = chatBox.scrollHeight;
+// For Interface 1 and 2: store question index on change
+function goToNextQuestion() {
+  currentQuestionIndex = (currentQuestionIndex + 1) % questions.length;
+  localStorage.setItem("currentQuestionIndex", currentQuestionIndex.toString());
+  // this function is meant to be called after advancing question in your viewer logic
 }
