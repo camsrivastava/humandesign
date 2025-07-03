@@ -1,4 +1,3 @@
-
 let currentQuestionIndex = 0;
 let questions = benchmark;
 
@@ -6,7 +5,7 @@ function showQuestion(index) {
   const q = questions[index];
 
   document.getElementById('question-image').innerHTML = `
-    <img src="${q.image_path.replace('\\', '/')}" alt="Case Image" style="max-width:100%; max-height:300px;" />
+    <img src="${q.image_path.replace(/\\\\/g, '/')}" alt="Case Image" style="max-width:100%; max-height:300px;" />
   `;
 
   document.getElementById('question-text').innerHTML = `
@@ -42,20 +41,4 @@ document.getElementById('submit-answer').addEventListener('click', (e) => {
     feedback.innerText = '✅ Correct!';
     feedback.style.color = 'green';
   } else {
-    feedback.innerText = `❌ Incorrect. You chose "${selected.value}", but the correct answer is "${correct}".`;
-    feedback.style.color = 'red';
-  }
-});
-
-document.getElementById('show-answer').addEventListener('click', () => {
-  const correct = questions[currentQuestionIndex].answer;
-  document.getElementById('answer-feedback').innerText = `✅ Correct answer: ${correct}`;
-  document.getElementById('answer-feedback').style.color = 'blue';
-});
-
-document.getElementById('next-question').addEventListener('click', () => {
-  currentQuestionIndex = (currentQuestionIndex + 1) % questions.length;
-  showQuestion(currentQuestionIndex);
-});
-
-showQuestion(currentQuestionIndex);
+    feedback.inne
