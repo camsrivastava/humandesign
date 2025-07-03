@@ -1,8 +1,11 @@
-let currentQuestionIndex = localStorage.getItem("highlightedQuestionIndex")
-  ? parseInt(localStorage.getItem("highlightedQuestionIndex"))
-  : 0;
+let currentQuestionIndex = parseInt(localStorage.getItem("highlightedQuestionIndex") || "0");
+let lastSeenIndex = parseInt(localStorage.getItem("highlightedLastSeenIndex") || "-1");
 let questions = benchmark;
-let chatHistory = JSON.parse(localStorage.getItem("highlightedChatHistory") || "[]");
+let chatHistory = [];
+
+if (currentQuestionIndex === lastSeenIndex) {
+  chatHistory = JSON.parse(localStorage.getItem("highlightedChatHistory") || "[]");
+}
 
 const chatBox = document.getElementById('chat-box');
 const chatForm = document.getElementById('chat-form');
@@ -10,6 +13,11 @@ const userInput = document.getElementById('user-input');
 
 function showQuestion(index) {
   const q = questions[index];
+
+  if (currentQuestionIndex !== lastSeenIndex) {
+    chatHistory = [];
+    localStorage.setItem("highlightedLastSeenIndex", currentQuestionIndex.toString());
+  }
 
   document.getElementById('question-image').innerHTML = `
     <img src="${q.image_path.replace(/\\\\/g, '/')}" alt="Case Image" style="max-width:100%; max-height:300px;" />
@@ -20,13 +28,13 @@ function showQuestion(index) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ question: q.question })
   })
-  .then(res => res.json())
-  .then(data => {
-    document.getElementById('question-text').innerHTML = data.highlighted;
-  })
-  .catch(() => {
-    document.getElementById('question-text').innerText = q.question;
-  });
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById('question-text').innerHTML = data.highlighted;
+    })
+    .catch(() => {
+      document.getElementById('question-text').innerText = q.question;
+    });
 
   const form = document.getElementById('question-form');
   form.innerHTML = '';
