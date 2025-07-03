@@ -1,145 +1,129 @@
-let currentQuestionIndex = parseInt(localStorage.getItem("currentQuestionIndex") || "0");
-let lastSeenIndex = parseInt(localStorage.getItem("lastSeenIndex") || "-1");
-let questions = benchmark;
-let chatHistory = [];
-
-if (performance.navigation.type === 1 /* reload */) {
-  // Keep session
-} else {
-  // New session: reset seen index and chat
-  localStorage.removeItem("lastSeenIndex");
-  localStorage.removeItem("chatHistory");
+/* ---------- 1.  CLEAR chat storage unless this is a true refresh ---------- */
+{
+  const nav = performance.getEntriesByType('navigation')[0];
+  const isReload = nav && nav.type === 'reload';
+  if (!isReload) {
+    localStorage.removeItem('chatHistory');
+    localStorage.removeItem('lastSeenIndex');
+  }
 }
 
+/* ---------- 2.  State variables ---------- */
+let currentQuestionIndex = parseInt(localStorage.getItem('currentQuestionIndex') || '0');
+let lastSeenIndex       = parseInt(localStorage.getItem('lastSeenIndex')       || '-1');
+let questions           = benchmark;
+let chatHistory         = [];
 
-const chatBox = document.getElementById('chat-box');
+/* ---------- 3.  DOM refs ---------- */
+const chatBox  = document.getElementById('chat-box');
 const chatForm = document.getElementById('chat-form');
-const userInput = document.getElementById('user-input');
+const userInput= document.getElementById('user-input');
 
+/* ---------- 4.  Main render ---------- */
 function showQuestion(index) {
   const q = questions[index];
 
-  // Fresh chat if first time seeing question
- if (currentQuestionIndex !== lastSeenIndex) {
-  chatHistory = [];
-  localStorage.setItem("lastSeenIndex", currentQuestionIndex.toString());
-  localStorage.removeItem("chatHistory");  // ✅ clear previous session
-} else {
-  chatHistory = JSON.parse(localStorage.getItem("chatHistory") || "[]");
-}
+  /* Fresh chat if first time seeing this question in this session */
+  if (currentQuestionIndex !== lastSeenIndex) {
+    chatHistory = [];
+    localStorage.setItem('lastSeenIndex', currentQuestionIndex.toString());
+  } else {
+    chatHistory = JSON.parse(localStorage.getItem('chatHistory') || '[]');
+  }
 
-  document.getElementById('question-image').innerHTML = `
-    <img src="${q.image_path.replace(/\\\\/g, '/')}" alt="Case Image" style="max-width:100%; max-height:300px;" />
-  `;
+  /* Image & text */
+  document.getElementById('question-image').innerHTML =
+    `<img src="${q.image_path.replace(/\\\\/g,'/')}" style="max-width:100%;max-height:300px;">`;
   document.getElementById('question-text').innerText = q.question;
 
+  /* Options */
   const form = document.getElementById('question-form');
-  form.innerHTML = '';
-  q.options.forEach((opt, i) => {
-    const id = `option-${i}`;
-    form.innerHTML += `
+  form.innerHTML = q.options.map((opt,i)=>`
       <div>
-        <input type="radio" id="${id}" name="answer" value="${opt.label}">
-        <label for="${id}">${opt.label}</label>
-      </div>
-    `;
-  });
+        <input type="radio" id="opt${i}" name="answer" value="${opt.label}">
+        <label for="opt${i}">${opt.label}</label>
+      </div>`).join('');
 
   document.getElementById('answer-feedback').innerText = '';
-  localStorage.setItem("currentQuestionIndex", currentQuestionIndex.toString());
-  localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
 
+  /* Persist indices & (empty) history */
+  localStorage.setItem('currentQuestionIndex', currentQuestionIndex.toString());
+  localStorage.setItem('chatHistory',          JSON.stringify(chatHistory));
+
+  /* Render chat history (if any) */
   chatBox.innerHTML = '';
-  chatHistory.forEach(entry => {
-    addMessage(entry.role === 'user' ? 'You' : 'GPT', entry.content);
-  });
+  chatHistory.forEach(m => addMessage(m.role==='user'?'You':'GPT', m.content));
 }
 
-chatForm.addEventListener('submit', async (e) => {
+/* ---------- 5.  GPT chat ---------- */
+chatForm.addEventListener('submit', async e => {
   e.preventDefault();
   const message = userInput.value.trim();
   if (!message) return;
 
   addMessage('You', message);
-  chatHistory.push({ role: 'user', content: message });
+  chatHistory.push({ role:'user', content:message });
   userInput.value = '';
   saveSession();
 
-  const response = await fetch('https://humandesign-vue9.onrender.com/chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message }),
+  const r = await fetch('https://humandesign-vue9.onrender.com/chat',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({message})
   });
 
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder('utf-8');
-  let assistantMsg = '';
+  const reader = r.body.getReader();
+  const dec    = new TextDecoder();
+  let assist   = '';
 
   while (true) {
-    const { done, value } = await reader.read();
+    const {done,value} = await reader.read();
     if (done) break;
-    const chunk = decoder.decode(value);
-    assistantMsg += chunk;
-    updateAssistantMessage(assistantMsg);
+    assist += dec.decode(value);
+    updateAssistant(assist);
   }
-
-  chatHistory.push({ role: 'assistant', content: assistantMsg });
+  chatHistory.push({ role:'assistant', content:assist });
   saveSession();
 });
 
-function addMessage(sender, text) {
-  const div = document.createElement('div');
-  div.textContent = `${sender}: ${text}`;
-  chatBox.appendChild(div);
-  chatBox.scrollTop = chatBox.scrollHeight;
+/* ---------- 6.  Helpers ---------- */
+function addMessage(sender,text){
+  const div=document.createElement('div');
+  div.textContent=`${sender}: ${text}`;
+  chatBox.appendChild(div); chatBox.scrollTop=chatBox.scrollHeight;
 }
-
-function updateAssistantMessage(text) {
-  let last = chatBox.lastChild;
-  if (!last || !last.classList.contains('assistant')) {
-    last = document.createElement('div');
-    last.classList.add('assistant');
+function updateAssistant(text){
+  let last=chatBox.lastChild;
+  if(!last||!last.classList.contains('assistant')){
+    last=document.createElement('div'); last.classList.add('assistant');
     chatBox.appendChild(last);
   }
-  last.textContent = `GPT: ${text}`;
-  chatBox.scrollTop = chatBox.scrollHeight;
+  last.textContent=`GPT: ${text}`;
+  chatBox.scrollTop=chatBox.scrollHeight;
+}
+function saveSession(){
+  localStorage.setItem('chatHistory',JSON.stringify(chatHistory));
 }
 
-function saveSession() {
-  localStorage.setItem("currentQuestionIndex", currentQuestionIndex.toString());
-  localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
-}
-
-document.getElementById('submit-answer').addEventListener('click', (e) => {
-  e.preventDefault();
-  const selected = document.querySelector('input[name="answer"]:checked');
-  const feedback = document.getElementById('answer-feedback');
-  if (!selected) {
-    feedback.innerText = 'Please select an option first.';
-    return;
-  }
-
-  const correct = questions[currentQuestionIndex].answer;
-  if (selected.value === correct) {
-    feedback.innerText = '✅ Correct!';
-    feedback.style.color = 'green';
-  } else {
-    feedback.innerText = `❌ Incorrect. You chose "${selected.value}", but the correct answer is "${correct}".`;
-    feedback.style.color = 'red';
-  }
-});
-
-document.getElementById('show-answer').addEventListener('click', () => {
-  const correct = questions[currentQuestionIndex].answer;
-  document.getElementById('answer-feedback').innerText = `✅ Correct answer: ${correct}`;
-  document.getElementById('answer-feedback').style.color = 'blue';
-});
-
-document.getElementById('next-question').addEventListener('click', () => {
-  currentQuestionIndex = (currentQuestionIndex + 1) % questions.length;
-  chatHistory = [];
+/* ---------- 7.  Answer buttons ---------- */
+document.getElementById('submit-answer').onclick = () => {
+  const sel=document.querySelector('input[name="answer"]:checked');
+  const fb =document.getElementById('answer-feedback');
+  if(!sel){fb.innerText='Pick an answer first.';return;}
+  const correct=questions[currentQuestionIndex].answer;
+  fb.innerText = sel.value===correct ? '✅ Correct!' :
+     `❌ Incorrect. Correct: "${correct}".`;
+};
+document.getElementById('show-answer').onclick = () => {
+  const correct=questions[currentQuestionIndex].answer;
+  document.getElementById('answer-feedback').innerText=`✅ Correct: ${correct}`;
+};
+document.getElementById('next-question').onclick = () => {
+  currentQuestionIndex = (currentQuestionIndex+1)%questions.length;
+  chatHistory=[];
   saveSession();
   showQuestion(currentQuestionIndex);
-});
+};
 
+/* ---------- 8.  Initial render ---------- */
 showQuestion(currentQuestionIndex);
