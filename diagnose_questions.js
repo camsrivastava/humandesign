@@ -132,29 +132,37 @@ function saveChat() {
   sessionStorage.setItem('dChatHist', JSON.stringify(chatHistory));
 }
 
-/* ─────────────── 6. Answer buttons (injected) ─────────────── */
+/* ─────────────── 6. Answer-button injection (crash-proof) ─────────────── */
 function checkForFinalAnswer(reply) {
-  const panel = document.getElementById('question-panel');
-  let nav = document.getElementById('nav-buttons');
   if (!reply.includes('I believe the correct answer is')) return;
 
+  const panel = document.getElementById('question-panel');
+  let   nav   = document.getElementById('nav-buttons');
+
+  /* Create container if needed */
   if (!nav) {
     nav = document.createElement('div');
     nav.id = 'nav-buttons';
     panel.appendChild(nav);
   }
+
+  /* If buttons already exist, don’t recreate/retach */
+  if (nav.querySelector('#submit-btn')) return;
+
+  /* Inject buttons */
   nav.innerHTML = `
     <button id="submit-btn">Submit Answer</button>
     <button id="show-btn">Show Answer</button>
     <button id="next-btn">Next Question</button>
   `;
 
-  /* Attach listeners once buttons exist */
-  document.getElementById('submit-btn').onclick = submitHumanAnswer;
-  document.getElementById('show-btn').onclick   = showCorrectAnswer;
-  document.getElementById('next-btn').onclick   = nextQuestion;
+  /* Safe listener attachment */
+  nav.querySelector('#submit-btn').addEventListener('click', submitHumanAnswer);
+  nav.querySelector('#show-btn')  .addEventListener('click', showCorrectAnswer);
+  nav.querySelector('#next-btn')  .addEventListener('click', nextQuestion);
 }
 
+/* ─────────────── 7. Button handlers ─────────────── */
 function submitHumanAnswer() {
   const sel = document.querySelector('input[name="answer"]:checked');
   const fb  = document.getElementById('answer-feedback');
@@ -176,5 +184,5 @@ function nextQuestion() {
   renderQuestion(nxt);
 }
 
-/* ─────────────── 7. Init ─────────────── */
+/* ─────────────── 8. Init ─────────────── */
 renderQuestion(currentIndex);
