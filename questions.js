@@ -1,17 +1,25 @@
-let currentQuestionIndex = 0;
+let currentQuestionIndex = localStorage.getItem("highlightedQuestionIndex")
+  ? parseInt(localStorage.getItem("highlightedQuestionIndex"))
+  : 0;
 let questions = benchmark;
+let chatHistory = JSON.parse(localStorage.getItem("highlightedChatHistory") || "[]");
+
+const chatBox = document.getElementById('chat-box');
+const chatForm = document.getElementById('chat-form');
+const userInput = document.getElementById('user-input');
 
 function showQuestion(index) {
   const q = questions[index];
 
+  // Show image
   document.getElementById('question-image').innerHTML = `
     <img src="${q.image_path.replace(/\\\\/g, '/')}" alt="Case Image" style="max-width:100%; max-height:300px;" />
   `;
 
-  document.getElementById('question-text').innerHTML = `
-    <h3>Q: ${q.question}</h3>
-  `;
+  // Show plain question text directly (no highlight fetch)
+  document.getElementById('question-text').innerText = q.question;
 
+  // Render answer options
   const form = document.getElementById('question-form');
   form.innerHTML = '';
   q.options.forEach((opt, i) => {
@@ -25,6 +33,69 @@ function showQuestion(index) {
   });
 
   document.getElementById('answer-feedback').innerText = '';
+
+  localStorage.setItem("highlightedQuestionIndex", currentQuestionIndex.toString());
+  localStorage.setItem("highlightedChatHistory", JSON.stringify(chatHistory));
+
+  chatBox.innerHTML = '';
+  chatHistory.forEach(entry => {
+    addMessage(entry.role === 'user' ? 'You' : 'GPT', entry.content);
+  });
+}
+
+chatForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const message = userInput.value.trim();
+  if (!message) return;
+
+  addMessage('You', message);
+  chatHistory.push({ role: 'user', content: message });
+  userInput.value = '';
+  saveSession();
+
+  const response = await fetch('https://humandesign-vue9.onrender.com/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message }),
+  });
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder('utf-8');
+  let assistantMsg = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const chunk = decoder.decode(value);
+    assistantMsg += chunk;
+    updateAssistantMessage(assistantMsg);
+  }
+
+  chatHistory.push({ role: 'assistant', content: assistantMsg });
+  saveSession();
+});
+
+function addMessage(sender, text) {
+  const div = document.createElement('div');
+  div.textContent = `${sender}: ${text}`;
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function updateAssistantMessage(text) {
+  let last = chatBox.lastChild;
+  if (!last || !last.classList.contains('assistant')) {
+    last = document.createElement('div');
+    last.classList.add('assistant');
+    chatBox.appendChild(last);
+  }
+  last.textContent = `GPT: ${text}`;
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function saveSession() {
+  localStorage.setItem("highlightedQuestionIndex", currentQuestionIndex.toString());
+  localStorage.setItem("highlightedChatHistory", JSON.stringify(chatHistory));
 }
 
 document.getElementById('submit-answer').addEventListener('click', (e) => {
@@ -54,6 +125,8 @@ document.getElementById('show-answer').addEventListener('click', () => {
 
 document.getElementById('next-question').addEventListener('click', () => {
   currentQuestionIndex = (currentQuestionIndex + 1) % questions.length;
+  chatHistory = [];
+  saveSession();
   showQuestion(currentQuestionIndex);
 });
 
