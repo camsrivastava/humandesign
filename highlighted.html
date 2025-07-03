@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Image Challenge with GPT Highlights</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- 🔼 TOP PANEL: With highlighted clues -->
+  <div class="top-panel" id="question-panel">
+    <div id="question-image"></div>
+    <div id="question-text"><em>Loading...</em></div>
+    <form id="question-form"></form>
+    <div id="answer-feedback"></div>
+    <div id="navigation-buttons">
+      <button id="submit-answer">Submit Answer</button>
+      <button id="show-answer">Show Answer</button>
+      <button id="next-question">Next Question</button>
+    </div>
+  </div>
+
+  <!-- 🔽 BOTTOM PANEL: GPT Chat (same as before) -->
+  <div class="bottom-panel">
+    <div class="chat-box" id="chat-box"></div>
+    <form id="chat-form">
+      <input type="text" id="user-input" placeholder="Ask GPT..." autocomplete="off" required />
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+  <!-- 🔗 Scripts -->
+  <script src="benchmark.js"></script>
+  <script src="highlighted_questions.js"></script>
+  <script src="script.js"></script>
+
+</body>
+</html>
