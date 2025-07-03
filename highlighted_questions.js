@@ -3,10 +3,6 @@ let lastSeenIndex = parseInt(localStorage.getItem("highlightedLastSeenIndex") ||
 let questions = benchmark;
 let chatHistory = [];
 
-if (currentQuestionIndex === lastSeenIndex) {
-  chatHistory = JSON.parse(localStorage.getItem("highlightedChatHistory") || "[]");
-}
-
 const chatBox = document.getElementById('chat-box');
 const chatForm = document.getElementById('chat-form');
 const userInput = document.getElementById('user-input');
@@ -17,6 +13,8 @@ function showQuestion(index) {
   if (currentQuestionIndex !== lastSeenIndex) {
     chatHistory = [];
     localStorage.setItem("highlightedLastSeenIndex", currentQuestionIndex.toString());
+  } else {
+    chatHistory = JSON.parse(localStorage.getItem("highlightedChatHistory") || "[]");
   }
 
   document.getElementById('question-image').innerHTML = `
