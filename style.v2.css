@@ -1,0 +1,111 @@
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", sans-serif;
+  background: #f8f9fa;
+  color: #333;
+}
+
+.top-panel {
+  padding: 24px;
+  background-color: #fff;
+  border-bottom: 2px solid #ccc;
+}
+
+.bottom-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  height: auto;
+}
+
+#question-image img {
+  max-width: 100%;
+  max-height: 320px;
+  border-radius: 8px;
+  display: block;
+  margin-bottom: 16px;
+}
+
+#question-text {
+  margin-bottom: 16px;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+#question-form div {
+  margin: 12px 0;
+  font-size: 1rem;
+}
+
+#question-form input[type="radio"] {
+  margin-right: 8px;
+}
+
+#answer-feedback {
+  margin-top: 16px;
+  font-weight: bold;
+}
+
+#navigation-buttons {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.chat-box {
+  flex: 1;
+  background: white;
+  border: 1px solid #ccc;
+  padding: 10px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  max-height: 300px;
+}
+
+#chat-form {
+  display: flex;
+  gap: 10px;
+}
+
+#user-input {
+  flex: 1;
+  padding: 12px 16px;
+  font-size: 16px;
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+button {
+  padding: 10px 16px;
+  font-size: 16px;
+  border-radius: 8px;
+  background-color: #0077cc;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+button:hover {
+  background-color: #005fa3;
+}
+
+.assistant {
+  background-color: #f0f0f0;
+  padding: 6px;
+  margin: 6px 0;
+  border-radius: 4px;
+}
+
+.human {
+  background-color: #dcefff;
+  padding: 6px;
+  margin: 6px 0;
+  border-radius: 4px;
+}
