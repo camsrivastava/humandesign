@@ -1,8 +1,12 @@
-let currentQuestionIndex = localStorage.getItem("currentQuestionIndex")
-  ? parseInt(localStorage.getItem("currentQuestionIndex"))
-  : 0;
+let currentQuestionIndex = parseInt(localStorage.getItem("currentQuestionIndex") || "0");
+let lastSeenIndex = parseInt(localStorage.getItem("lastSeenIndex") || "-1");
 let questions = benchmark;
-let chatHistory = JSON.parse(localStorage.getItem("chatHistory") || "[]");
+let chatHistory = [];
+
+if (currentQuestionIndex === lastSeenIndex) {
+  chatHistory = JSON.parse(localStorage.getItem("chatHistory") || "[]");
+}
+
 
 
 const chatBox = document.getElementById('chat-box');
