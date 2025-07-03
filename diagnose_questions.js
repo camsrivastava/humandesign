@@ -1,159 +1,124 @@
+/* ---------- 1.  Wipe chat unless this is a true page refresh ---------- */
+{
+  const nav = performance.getEntriesByType('navigation')[0];
+  const isReload = nav && nav.type === 'reload';
+  if (!isReload) {
+    sessionStorage.removeItem('dChatHist');
+    sessionStorage.removeItem('dLastSeenIdx');
+  }
+}
 
-let currentIndex = localStorage.getItem("currentIndex")
-  ? parseInt(localStorage.getItem("currentIndex"))
-  : 0;
+/* ---------- 2.  State ---------- */
+let currentIndex = parseInt(sessionStorage.getItem('dIdx') || '0');
+let lastSeenIdx  = parseInt(sessionStorage.getItem('dLastSeenIdx') || '-1');
+let questions    = benchmark;
+let chatHistory  = [];
 
-let questions = benchmark;
+const chatBox  = document.getElementById('dialog-box');
+const chatForm = document.getElementById('chat-form');
+const userInput= document.getElementById('user-input');
 
-let chatHistory = localStorage.getItem("chatHistory")
-  ? JSON.parse(localStorage.getItem("chatHistory"))
-  : [];
+/* ---------- 3.  Render ---------- */
+function renderQuestion(idx){
+  const q = questions[idx];
 
-const dialogBox = document.getElementById('dialog-box');
-const dialogForm = document.getElementById('chat-form');
-const dialogInput = document.getElementById('user-input');
-const feedbackBox = document.getElementById('answer-feedback') || document.createElement('div');
-const navButtons = document.getElementById('navigation-buttons') || document.createElement('div');
-
-function renderQuestion(index) {
-  const q = questions[index];
-
-  document.getElementById('question-image').innerHTML = `
-    <img src="${q.image_path.replace('\\', '/')}" alt="Case Image" style="max-width:100%; max-height:300px;" />
-  `;
-  document.getElementById('question-text').innerHTML = '<strong>Q:</strong> ' + q.question;
-
-  const answerList = document.getElementById('answer-options');
-  answerList.innerHTML = q.options.map((opt, i) => {
-    const id = `choice-${i}`;
-    return `
-      <div>
-        <input type="radio" id="${id}" name="final-answer" value="${opt.label}">
-        <label for="${id}">${opt.label}</label>
-      </div>
-    `;
-  }).join('');
-
-  feedbackBox.innerText = '';
-  navButtons.innerHTML = '';
-  dialogBox.innerHTML = '';
-
-  if (chatHistory.length > 0) {
-    chatHistory.forEach(entry => {
-      appendMessage(entry.role === 'user' ? 'human' : 'gpt', entry.content);
-    });
-    checkForFinalAnswer(chatHistory[chatHistory.length - 1].content);
+  /* Decide whether to reset or restore chat */
+  if (!sessionStorage.getItem('dIdx') || idx !== lastSeenIdx){
+    chatHistory = [];
   } else {
-    appendMessage('gpt', 'Loading case and beginning diagnostic reasoning...');
+    chatHistory = JSON.parse(sessionStorage.getItem('dChatHist') || '[]');
+  }
+
+  /* Image + text */
+  document.getElementById('question-image').innerHTML =
+    `<img src="${q.image_path.replace(/\\\\/g,'/')}" style="max-width:100%;max-height:300px;">`;
+  document.getElementById('question-text').innerText = q.question;
+
+  /* Radio options */
+  const form = document.getElementById('question-form');
+  form.innerHTML = q.options.map((o,i)=>`
+    <div><input type="radio" id="o${i}" name="answer" value="${o.label}">
+    <label for="o${i}">${o.label}</label></div>`).join('');
+  document.getElementById('answer-feedback').innerText = '';
+
+  /* Persist index */
+  currentIndex = idx;
+  sessionStorage.setItem('dIdx', idx.toString());
+  sessionStorage.setItem('dLastSeenIdx', idx.toString());
+
+  /* Render chat history */
+  chatBox.innerHTML = '';
+  chatHistory.forEach(m=> appendMsg(m.role==='user'?'You':'GPT', m.content));
+
+  /* If first time, ask GPT to start the diagnostic dialog */
+  if (chatHistory.length === 0){
+    appendMsg('GPT', 'Loading case and beginning diagnostic reasoning...');
     fetch('https://humandesign-vue9.onrender.com/diagnose', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        question: q.question,
-        options: q.options,
-        history: []
-      })
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ question:q.question, options:q.options, history:[] })
     })
-    .then(res => res.json())
-    .then(data => {
-      appendMessage('gpt', data.reply);
-      chatHistory.push({ role: 'assistant', content: data.reply });
-      saveState();
-      checkForFinalAnswer(data.reply);
+    .then(r=>r.json())
+    .then(d=>{
+      chatHistory.push({role:'assistant',content:d.reply});
+      saveChat(); updateAssistant(d.reply);
     });
   }
 }
 
-function appendMessage(sender, text) {
-  const div = document.createElement('div');
-  div.className = sender === 'gpt' ? 'assistant' : 'human';
-  div.innerHTML = `<strong>${sender === 'gpt' ? 'GPT' : 'You'}:</strong> ${text}`;
-  dialogBox.appendChild(div);
-  dialogBox.scrollTop = dialogBox.scrollHeight;
-}
-
-dialogForm.addEventListener('submit', async (e) => {
+/* ---------- 4.  Chat logic ---------- */
+chatForm.addEventListener('submit', async e=>{
   e.preventDefault();
-  const userText = dialogInput.value.trim();
-  if (!userText) return;
+  const msg = userInput.value.trim(); if(!msg) return;
+  appendMsg('You', msg);
+  chatHistory.push({role:'user',content:msg});
+  userInput.value=''; saveChat();
 
-  appendMessage('human', userText);
-  chatHistory.push({ role: 'user', content: userText });
-  dialogInput.value = '';
-  saveState();
-
-  const q = questions[currentIndex];
-  const response = await fetch('https://humandesign-vue9.onrender.com/diagnose', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      question: q.question,
-      options: q.options,
-      history: chatHistory
+  const r=await fetch('https://humandesign-vue9.onrender.com/diagnose',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      question: questions[currentIndex].question,
+      options : questions[currentIndex].options,
+      history : chatHistory
     })
   });
-  const data = await response.json();
-  appendMessage('gpt', data.reply);
-  chatHistory.push({ role: 'assistant', content: data.reply });
-  saveState();
-  checkForFinalAnswer(data.reply);
+  const rd=r.body.getReader(); const dec=new TextDecoder(); let asst='';
+  while(true){const {done,value}=await rd.read(); if(done)break;
+    asst += dec.decode(value); updateAssistant(asst);}
+  chatHistory.push({role:'assistant',content:asst}); saveChat();
 });
 
-function checkForFinalAnswer(reply) {
-  if (reply.includes("I believe the correct answer is:")) {
-    navButtons.innerHTML = `
-      <button onclick="submitHumanAnswer()">Submit Answer</button>
-      <button onclick="showCorrectAnswer()">Show Answer</button>
-      <button onclick="nextQuestion()">Next Question</button>
-    `;
-    document.getElementById('question-panel').appendChild(feedbackBox);
-    document.getElementById('question-panel').appendChild(navButtons);
-  }
+function appendMsg(sender,text){
+  const div=document.createElement('div');
+  div.textContent=`${sender}: ${text}`;
+  chatBox.appendChild(div); chatBox.scrollTop=chatBox.scrollHeight;
 }
+function updateAssistant(text){
+  let last=chatBox.lastChild;
+  if(!last||!last.classList.contains('assistant')){
+    last=document.createElement('div');last.classList.add('assistant');
+    chatBox.appendChild(last);}
+  last.textContent=`GPT: ${text}`; chatBox.scrollTop=chatBox.scrollHeight;
+}
+function saveChat(){ sessionStorage.setItem('dChatHist', JSON.stringify(chatHistory)); }
 
-function submitHumanAnswer() {
-  const selected = document.querySelector('input[name="final-answer"]:checked');
+/* ---------- 5.  Answer buttons ---------- */
+document.getElementById('submit-answer').onclick=()=>{
+  const sel=document.querySelector('input[name="answer"]:checked');
+  const fb =document.getElementById('answer-feedback');
+  if(!sel){fb.innerText='Pick an answer.';return;}
   const correct = questions[currentIndex].answer;
-  const gptAnswer = chatHistory.map(m => m.content)
-    .find(t => t.includes("I believe the correct answer is:"))
-    ?.match(/correct answer is: ([\s\S]+?)\.?$/i)?.[1]?.trim();
+  fb.innerText  = sel.value===correct ? '✅ Correct!' :
+    `❌ Incorrect. Correct: "${correct}".`;
+};
+document.getElementById('show-answer').onclick=()=>{
+  const corr=questions[currentIndex].answer;
+  document.getElementById('answer-feedback').innerText=`✅ Correct: ${corr}`;
+};
+document.getElementById('next-question').onclick=()=>{
+  const nxt=(currentIndex+1)%questions.length;
+  chatHistory=[]; saveChat(); renderQuestion(nxt);
+};
 
-  if (!selected) {
-    feedbackBox.innerText = 'Please select an answer.';
-    return;
-  }
-
-  const human = selected.value;
-  let result = '';
-
-  if (human === correct && gptAnswer === correct) {
-    result = '✅ You and GPT both got it right!';
-  } else if (human === correct && gptAnswer !== correct) {
-    result = `🟡 You were right! GPT said "${gptAnswer}".`;
-  } else if (human !== correct && gptAnswer === correct) {
-    result = `🟡 GPT was right. You chose "${human}".`;
-  } else {
-    result = `❌ Both of you were wrong. You chose "${human}", GPT chose "${gptAnswer}". Correct answer: "${correct}".`;
-  }
-
-  feedbackBox.innerText = result;
-}
-
-function showCorrectAnswer() {
-  const correct = questions[currentIndex].answer;
-  feedbackBox.innerText = `✅ Correct answer: ${correct}`;
-}
-
-function nextQuestion() {
-  currentIndex = (currentIndex + 1) % questions.length;
-  chatHistory = [];
-  saveState();
-  renderQuestion(currentIndex);
-}
-
-function saveState() {
-  localStorage.setItem("currentIndex", currentIndex.toString());
-  localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
-}
-
+/* ---------- 6.  Init ---------- */
 renderQuestion(currentIndex);
