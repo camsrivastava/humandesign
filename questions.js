@@ -11,12 +11,13 @@ function showQuestion(index) {
   const q = questions[index];
 
   // Fresh chat if first time seeing question
-  if (currentQuestionIndex !== lastSeenIndex) {
-    chatHistory = [];
-    localStorage.setItem("lastSeenIndex", currentQuestionIndex.toString());
-  } else {
-    chatHistory = JSON.parse(localStorage.getItem("chatHistory") || "[]");
-  }
+ if (currentQuestionIndex !== lastSeenIndex) {
+  chatHistory = [];
+  localStorage.setItem("lastSeenIndex", currentQuestionIndex.toString());
+  localStorage.removeItem("chatHistory");  // ✅ clear previous session
+} else {
+  chatHistory = JSON.parse(localStorage.getItem("chatHistory") || "[]");
+}
 
   document.getElementById('question-image').innerHTML = `
     <img src="${q.image_path.replace(/\\\\/g, '/')}" alt="Case Image" style="max-width:100%; max-height:300px;" />
