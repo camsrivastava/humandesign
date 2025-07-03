@@ -1,12 +1,5 @@
-let currentQuestionIndex = localStorage.getItem("currentQuestionIndex")
-  ? parseInt(localStorage.getItem("currentQuestionIndex"))
-  : 0;
+let currentQuestionIndex = 0;
 let questions = benchmark;
-let chatHistory = JSON.parse(localStorage.getItem("chatHistory") || "[]");
-
-const chatBox = document.getElementById('chat-box');
-const chatForm = document.getElementById('chat-form');
-const userInput = document.getElementById('user-input');
 
 function showQuestion(index) {
   const q = questions[index];
@@ -32,28 +25,36 @@ function showQuestion(index) {
   });
 
   document.getElementById('answer-feedback').innerText = '';
-  localStorage.setItem("currentQuestionIndex", currentQuestionIndex.toString());
-  localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
-
-  // Clear chat box and render chat history
-  chatBox.innerHTML = '';
-  chatHistory.forEach(entry => {
-    addMessage(entry.role === 'user' ? 'You' : 'GPT', entry.content);
-  });
 }
 
-chatForm.addEventListener('submit', async (e) => {
+document.getElementById('submit-answer').addEventListener('click', (e) => {
   e.preventDefault();
-  const message = userInput.value.trim();
-  if (!message) return;
+  const selected = document.querySelector('input[name="answer"]:checked');
+  const feedback = document.getElementById('answer-feedback');
+  if (!selected) {
+    feedback.innerText = 'Please select an option first.';
+    return;
+  }
 
-  addMessage('You', message);
-  chatHistory.push({ role: 'user', content: message });
-  userInput.value = '';
-  saveSession();
+  const correct = questions[currentQuestionIndex].answer;
+  if (selected.value === correct) {
+    feedback.innerText = '✅ Correct!';
+    feedback.style.color = 'green';
+  } else {
+    feedback.innerText = `❌ Incorrect. You chose "${selected.value}", but the correct answer is "${correct}".`;
+    feedback.style.color = 'red';
+  }
+});
 
-  const response = await fetch('/chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message }),
-  });
+document.getElementById('show-answer').addEventListener('click', () => {
+  const correct = questions[currentQuestionIndex].answer;
+  document.getElementById('answer-feedback').innerText = `✅ Correct answer: ${correct}`;
+  document.getElementById('answer-feedback').style.color = 'blue';
+});
+
+document.getElementById('next-question').addEventListener('click', () => {
+  currentQuestionIndex = (currentQuestionIndex + 1) % questions.length;
+  showQuestion(currentQuestionIndex);
+});
+
+showQuestion(currentQuestionIndex);
