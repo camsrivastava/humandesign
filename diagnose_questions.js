@@ -7,6 +7,9 @@ const dialogBox = document.getElementById('dialog-box');
 const dialogForm = document.getElementById('dialog-form');
 const dialogInput = document.getElementById('dialog-input');
 
+const feedbackBox = document.getElementById('answer-feedback') || document.createElement('div');
+const navButtons = document.getElementById('navigation-buttons') || document.createElement('div');
+
 function renderQuestion(index) {
   const q = questions[index];
   chatHistory = [];
@@ -17,9 +20,20 @@ function renderQuestion(index) {
   `;
   document.getElementById('question-text').innerHTML = '<strong>Q:</strong> ' + q.question;
 
-  // Show answer options
-  document.getElementById('answer-options').innerHTML = q.options.map(o => `<li>${o.label}</li>`).join('');
+  // Show answer options as radio buttons
+  const answerList = document.getElementById('answer-options');
+  answerList.innerHTML = q.options.map((opt, i) => {
+    const id = `choice-${i}`;
+    return `
+      <div>
+        <input type="radio" id="${id}" name="final-answer" value="${opt.label}">
+        <label for="${id}">${opt.label}</label>
+      </div>
+    `;
+  }).join('');
 
+  feedbackBox.innerText = '';
+  navButtons.innerHTML = '';
   dialogBox.innerHTML = '';
   appendMessage('gpt', 'Loading case and beginning diagnostic reasoning...');
 
@@ -36,6 +50,7 @@ function renderQuestion(index) {
   .then(data => {
     appendMessage('gpt', data.reply);
     chatHistory.push({ role: 'assistant', content: data.reply });
+    checkForFinalAnswer(data.reply);
   });
 }
 
@@ -70,17 +85,59 @@ dialogForm.addEventListener('submit', async (e) => {
   appendMessage('gpt', data.reply);
   chatHistory.push({ role: 'assistant', content: data.reply });
 
-  // Check for final answer pattern
-  if (data.reply.includes("I believe the correct answer is:")) {
-    const nextBtn = document.createElement('button');
-    nextBtn.textContent = 'Next Question';
-    nextBtn.onclick = () => {
-      currentIndex = (currentIndex + 1) % questions.length;
-      renderQuestion(currentIndex);
-    };
-    dialogBox.appendChild(nextBtn);
-  }
+  checkForFinalAnswer(data.reply);
 });
+
+function checkForFinalAnswer(reply) {
+  if (reply.includes("I believe the correct answer is:")) {
+    // Add buttons
+    navButtons.innerHTML = `
+      <button onclick="submitHumanAnswer()">Submit Answer</button>
+      <button onclick="showCorrectAnswer()">Show Answer</button>
+      <button onclick="nextQuestion()">Next Question</button>
+    `;
+    document.getElementById('question-panel').appendChild(feedbackBox);
+    document.getElementById('question-panel').appendChild(navButtons);
+  }
+}
+
+function submitHumanAnswer() {
+  const selected = document.querySelector('input[name="final-answer"]:checked');
+  const correct = questions[currentIndex].answer;
+  const gptAnswer = chatHistory.map(m => m.content)
+    .find(t => t.includes("I believe the correct answer is:"))
+    ?.match(/correct answer is: ([\s\S]+?)\.?$/i)?.[1]?.trim();
+
+  if (!selected) {
+    feedbackBox.innerText = 'Please select an answer.';
+    return;
+  }
+
+  const human = selected.value;
+  let result = '';
+
+  if (human === correct && gptAnswer === correct) {
+    result = '✅ You and GPT both got it right!';
+  } else if (human === correct && gptAnswer !== correct) {
+    result = `🟡 You were right! GPT said "${gptAnswer}".`;
+  } else if (human !== correct && gptAnswer === correct) {
+    result = `🟡 GPT was right. You chose "${human}".`;
+  } else {
+    result = `❌ Both of you were wrong. You chose "${human}", GPT chose "${gptAnswer}". Correct answer: "${correct}".`;
+  }
+
+  feedbackBox.innerText = result;
+}
+
+function showCorrectAnswer() {
+  const correct = questions[currentIndex].answer;
+  feedbackBox.innerText = `✅ Correct answer: ${correct}`;
+}
+
+function nextQuestion() {
+  currentIndex = (currentIndex + 1) % questions.length;
+  renderQuestion(currentIndex);
+}
 
 // Load the first question
 renderQuestion(currentIndex);
