@@ -132,24 +132,29 @@ function saveChat() {
   sessionStorage.setItem('dChatHist', JSON.stringify(chatHistory));
 }
 
-/* ───────── 6.  Answer-button injection: inline onclick = no null crash ───────── */
+/* ───────── 6.  Answer-button injection (no null crash, always visible) ───────── */
 function checkForFinalAnswer(reply) {
-  if (!reply.includes('I believe the correct answer is')) return;
+  /* Accept any phrasing that ends with the proposed answer */
+  if (!reply.toLowerCase().includes('correct answer')) return;
 
   const panel = document.getElementById('question-panel');
 
-  /* Only create once per question */
-  if (document.getElementById('nav-buttons')) return;
+  /* Re-use container if it exists, otherwise create it */
+  let nav = document.getElementById('nav-buttons');
+  if (!nav) {
+    nav = document.createElement('div');
+    nav.id = 'nav-buttons';
+    panel.appendChild(nav);
+  }
 
-  const nav = document.createElement('div');
-  nav.id = 'nav-buttons';
+  /* Always (re)populate the HTML with inline handlers */
   nav.innerHTML = `
     <button onclick="submitHumanAnswer()">Submit Answer</button>
     <button onclick="showCorrectAnswer()">Show Answer</button>
     <button onclick="nextQuestion()">Next Question</button>
   `;
-  panel.appendChild(nav);
 }
+
 
 
   /* If buttons already exist, don’t recreate/retach */
