@@ -4,7 +4,7 @@ const cors = require('cors');
 
 const app = express();
 
-// Allow requests from your GitHub Pages frontend
+// Allow GitHub Pages frontend
 app.use(cors({
   origin: 'https://camsrivastava.github.io',
   methods: ['POST'],
@@ -13,7 +13,7 @@ app.use(cors({
 app.use(express.json());
 app.use(express.static('.'));
 
-// 🔁 Chat route: streams GPT-4o-mini responses
+// 🔁 Chat route
 app.post('/chat', async (req, res) => {
   const userMessage = req.body.message;
 
@@ -47,7 +47,7 @@ app.post('/chat', async (req, res) => {
   });
 });
 
-// 🆕 Highlight route: returns question with <mark> tags
+// 🖍 Highlight route
 app.post('/highlight', async (req, res) => {
   const questionText = req.body.question;
 
@@ -74,11 +74,47 @@ app.post('/highlight', async (req, res) => {
 
   const json = await response.json();
   const highlightedHTML = json.choices?.[0]?.message?.content || '';
-
   res.json({ highlighted: highlightedHTML });
 });
 
-// Start the server
+// 🧠 Diagnose route
+app.post('/diagnose', async (req, res) => {
+  const { question, options, history } = req.body;
+
+  const systemPrompt = `
+You are taking a multiple-choice clinical image challenge quiz, but you are NOT shown the image. You only see the question text and the answer choices.
+
+You will ask the human questions about the image (they can see it) until you feel confident selecting an answer. Think aloud. Eliminate wrong choices if possible. Ask as many questions as needed — your goal is accuracy, not speed.
+
+When you're ready, state your final answer clearly like this:
+"Based on your interpretation, I believe the correct answer is: [ANSWER]."
+`;
+
+  const messages = [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: `Question: ${question}\nOptions:\n${options.map(o => o.label).join('\n')}` },
+    ...history
+  ];
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: messages,
+      stream: false,
+    }),
+  });
+
+  const json = await response.json();
+  const reply = json.choices?.[0]?.message?.content || '[No reply]';
+  res.json({ reply });
+});
+
+// 🔊 Start server
 app.listen(3000, () => {
   console.log('Server running on http://localhost:3000');
 });
