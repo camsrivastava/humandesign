@@ -3,6 +3,15 @@ let lastSeenIndex = parseInt(localStorage.getItem("lastSeenIndex") || "-1");
 let questions = benchmark;
 let chatHistory = [];
 
+if (performance.navigation.type === 1 /* reload */) {
+  // Keep session
+} else {
+  // New session: reset seen index and chat
+  localStorage.removeItem("lastSeenIndex");
+  localStorage.removeItem("chatHistory");
+}
+
+
 const chatBox = document.getElementById('chat-box');
 const chatForm = document.getElementById('chat-form');
 const userInput = document.getElementById('user-input');
