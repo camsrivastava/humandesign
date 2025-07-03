@@ -3,10 +3,6 @@ let lastSeenIndex = parseInt(localStorage.getItem("lastSeenIndex") || "-1");
 let questions = benchmark;
 let chatHistory = [];
 
-if (currentQuestionIndex === lastSeenIndex) {
-  chatHistory = JSON.parse(localStorage.getItem("chatHistory") || "[]");
-}
-
 const chatBox = document.getElementById('chat-box');
 const chatForm = document.getElementById('chat-form');
 const userInput = document.getElementById('user-input');
@@ -14,9 +10,12 @@ const userInput = document.getElementById('user-input');
 function showQuestion(index) {
   const q = questions[index];
 
+  // Fresh chat if first time seeing question
   if (currentQuestionIndex !== lastSeenIndex) {
     chatHistory = [];
     localStorage.setItem("lastSeenIndex", currentQuestionIndex.toString());
+  } else {
+    chatHistory = JSON.parse(localStorage.getItem("chatHistory") || "[]");
   }
 
   document.getElementById('question-image').innerHTML = `
