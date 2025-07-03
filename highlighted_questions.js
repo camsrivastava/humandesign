@@ -11,11 +11,12 @@ function showQuestion(index) {
   const q = questions[index];
 
   if (currentQuestionIndex !== lastSeenIndex) {
-    chatHistory = [];
-    localStorage.setItem("highlightedLastSeenIndex", currentQuestionIndex.toString());
-  } else {
-    chatHistory = JSON.parse(localStorage.getItem("highlightedChatHistory") || "[]");
-  }
+  chatHistory = [];
+  localStorage.setItem("highlightedLastSeenIndex", currentQuestionIndex.toString());
+  localStorage.removeItem("highlightedChatHistory");  // ✅ clear stored chat
+} else {
+  chatHistory = JSON.parse(localStorage.getItem("highlightedChatHistory") || "[]");
+}
 
   document.getElementById('question-image').innerHTML = `
     <img src="${q.image_path.replace(/\\\\/g, '/')}" alt="Case Image" style="max-width:100%; max-height:300px;" />
