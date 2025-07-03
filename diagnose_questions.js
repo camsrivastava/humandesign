@@ -2,6 +2,7 @@
 let currentIndex = localStorage.getItem("currentIndex")
   ? parseInt(localStorage.getItem("currentIndex"))
   : 0;
+
 let questions = benchmark;
 
 let chatHistory = localStorage.getItem("chatHistory")
@@ -11,20 +12,17 @@ let chatHistory = localStorage.getItem("chatHistory")
 const dialogBox = document.getElementById('dialog-box');
 const dialogForm = document.getElementById('chat-form');
 const dialogInput = document.getElementById('user-input');
-
 const feedbackBox = document.getElementById('answer-feedback') || document.createElement('div');
 const navButtons = document.getElementById('navigation-buttons') || document.createElement('div');
 
 function renderQuestion(index) {
   const q = questions[index];
 
-  // Display image and text
   document.getElementById('question-image').innerHTML = `
     <img src="${q.image_path.replace('\\', '/')}" alt="Case Image" style="max-width:100%; max-height:300px;" />
   `;
   document.getElementById('question-text').innerHTML = '<strong>Q:</strong> ' + q.question;
 
-  // Show answer options as radio buttons
   const answerList = document.getElementById('answer-options');
   answerList.innerHTML = q.options.map((opt, i) => {
     const id = `choice-${i}`;
@@ -40,7 +38,12 @@ function renderQuestion(index) {
   navButtons.innerHTML = '';
   dialogBox.innerHTML = '';
 
-  if (chatHistory.length === 0) {
+  if (chatHistory.length > 0) {
+    chatHistory.forEach(entry => {
+      appendMessage(entry.role === 'user' ? 'human' : 'gpt', entry.content);
+    });
+    checkForFinalAnswer(chatHistory[chatHistory.length - 1].content);
+  } else {
     appendMessage('gpt', 'Loading case and beginning diagnostic reasoning...');
     fetch('https://humandesign-vue9.onrender.com/diagnose', {
       method: 'POST',
@@ -55,14 +58,9 @@ function renderQuestion(index) {
     .then(data => {
       appendMessage('gpt', data.reply);
       chatHistory.push({ role: 'assistant', content: data.reply });
-      saveSession();
+      saveState();
       checkForFinalAnswer(data.reply);
     });
-  } else {
-    chatHistory.forEach(entry => {
-      appendMessage(entry.role === 'user' ? 'human' : 'gpt', entry.content);
-    });
-    checkForFinalAnswer(chatHistory[chatHistory.length - 1]?.content || '');
   }
 }
 
@@ -82,7 +80,7 @@ dialogForm.addEventListener('submit', async (e) => {
   appendMessage('human', userText);
   chatHistory.push({ role: 'user', content: userText });
   dialogInput.value = '';
-  saveSession();
+  saveState();
 
   const q = questions[currentIndex];
   const response = await fetch('https://humandesign-vue9.onrender.com/diagnose', {
@@ -97,7 +95,7 @@ dialogForm.addEventListener('submit', async (e) => {
   const data = await response.json();
   appendMessage('gpt', data.reply);
   chatHistory.push({ role: 'assistant', content: data.reply });
-  saveSession();
+  saveState();
   checkForFinalAnswer(data.reply);
 });
 
@@ -149,14 +147,13 @@ function showCorrectAnswer() {
 function nextQuestion() {
   currentIndex = (currentIndex + 1) % questions.length;
   chatHistory = [];
-  saveSession();
+  saveState();
   renderQuestion(currentIndex);
 }
 
-function saveSession() {
+function saveState() {
   localStorage.setItem("currentIndex", currentIndex.toString());
   localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
 }
 
-// Load the first or saved question
 renderQuestion(currentIndex);
