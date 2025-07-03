@@ -7,8 +7,6 @@ if (currentQuestionIndex === lastSeenIndex) {
   chatHistory = JSON.parse(localStorage.getItem("chatHistory") || "[]");
 }
 
-
-
 const chatBox = document.getElementById('chat-box');
 const chatForm = document.getElementById('chat-form');
 const userInput = document.getElementById('user-input');
@@ -16,15 +14,16 @@ const userInput = document.getElementById('user-input');
 function showQuestion(index) {
   const q = questions[index];
 
-  // Show image
+  if (currentQuestionIndex !== lastSeenIndex) {
+    chatHistory = [];
+    localStorage.setItem("lastSeenIndex", currentQuestionIndex.toString());
+  }
+
   document.getElementById('question-image').innerHTML = `
     <img src="${q.image_path.replace(/\\\\/g, '/')}" alt="Case Image" style="max-width:100%; max-height:300px;" />
   `;
-
-  // Show plain question text directly (no highlight fetch)
   document.getElementById('question-text').innerText = q.question;
 
-  // Render answer options
   const form = document.getElementById('question-form');
   form.innerHTML = '';
   q.options.forEach((opt, i) => {
@@ -38,10 +37,8 @@ function showQuestion(index) {
   });
 
   document.getElementById('answer-feedback').innerText = '';
-
- localStorage.setItem("currentQuestionIndex", ...)
-localStorage.setItem("chatHistory", ...)
-
+  localStorage.setItem("currentQuestionIndex", currentQuestionIndex.toString());
+  localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
 
   chatBox.innerHTML = '';
   chatHistory.forEach(entry => {
@@ -100,8 +97,8 @@ function updateAssistantMessage(text) {
 }
 
 function saveSession() {
-  localStorage.setItem("highlightedQuestionIndex", currentQuestionIndex.toString());
-  localStorage.setItem("highlightedChatHistory", JSON.stringify(chatHistory));
+  localStorage.setItem("currentQuestionIndex", currentQuestionIndex.toString());
+  localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
 }
 
 document.getElementById('submit-answer').addEventListener('click', (e) => {
