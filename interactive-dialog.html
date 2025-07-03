@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GPT Diagnostician Interface</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- 🔼 Question + Image -->
+  <div class="top-panel" id="question-panel">
+    <div id="question-image"></div>
+    <div id="question-text"><em>Loading case...</em></div>
+    <ul id="answer-options"></ul>
+  </div>
+
+  <!-- 💬 GPT Dialog -->
+  <div class="bottom-panel">
+    <div class="chat-box" id="dialog-box"></div>
+    <form id="dialog-form">
+      <input type="text" id="dialog-input" placeholder="Your answer to GPT..." autocomplete="off" required />
+      <button type="submit">Reply</button>
+    </form>
+  </div>
+
+  <!-- 📜 Scripts -->
+  <script src="benchmark.js"></script>
+  <script src="diagnose_questions.js"></script>
+</body>
+</html>
